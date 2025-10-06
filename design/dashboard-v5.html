@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnackFit Dashboard · v5</title>
+  <style>
+    :root{
+      --bg:#0E0E10;
+      --surface:#16161A;
+      --card:#1F1F24;
+      --hair:#2A2B31;
+      --text:#EAEAF0;
+      --muted:#A0A1B2;
+      --primary:#A88CF5; /* weekly */
+      --accent:#23C074;  /* today */
+      --lp-bg:#CDB4F6;   /* light purple card */
+      --lp-text:#1C1B22;
+      --lp-muted:#5C5C6E;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font:16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial;
+      padding:24px; display:flex; flex-direction:column; align-items:center; gap:24px;
+    }
+    .card{
+      width:100%; max-width:420px;
+      background:var(--surface);
+      border:1px solid var(--hair);
+      border-radius:24px;
+      padding:20px;
+      box-shadow:0 8px 24px rgba(0,0,0,.45);
+    }
+    h2{margin:0 0 10px; font-size:20px; font-weight:900; letter-spacing:.2px;}
+
+    /* Chips (lightweight) */
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px}
+    .chip{
+      padding:6px 12px; border-radius:999px;
+      background:#202028; border:1px solid #2C2C33;
+      color:#CFCFD8; font-weight:700; font-size:12px; letter-spacing:.2px;
+      opacity:.9; cursor:pointer; user-select:none;
+    }
+    .chip.active{border-color:var(--primary); color:var(--primary); background:#1B1823}
+
+    /* Snackcercise controls */
+    .exercise-title{font-size:22px; font-weight:900; margin:2px 0 4px}
+    .intensity-labels{display:flex; justify-content:space-between; margin:0 62px -8px; color:var(--muted); font-size:12px}
+    .controls{display:flex; align-items:center; justify-content:center; gap:26px; margin-top:8px}
+    .control-btn{
+      width:46px; height:46px; border-radius:50%; display:grid; place-items:center;
+      background:var(--card); border:1px solid var(--hair); color:var(--text); font-size:20px; cursor:pointer;
+    }
+    .play-btn{
+      width:78px; height:78px; border-radius:50%; display:grid; place-items:center;
+      background:var(--card);
+      border:2px solid var(--accent); color:var(--accent); font-size:28px; font-weight:900;
+      box-shadow:0 6px 18px rgba(35,192,116,.22);
+    }
+    .swap{display:flex; justify-content:center; margin-top:10px}
+    .swap button{
+      padding:9px 14px; border-radius:999px; background:var(--card);
+      border:1px solid var(--primary); color:var(--primary); font-weight:800; cursor:pointer;
+    }
+
+    /* Light Purple Progress Card (with daily on top, weekly bottom) */
+    .lp-card{
+      width:100%; max-width:420px;
+      background:var(--lp-bg);
+      color:var(--lp-text);
+      border-radius:24px;
+      padding:16px 18px 14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.35);
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .lp-title{margin:0 0 8px; font-size:18px; font-weight:900; color:var(--lp-text)}
+
+    .stat-row{display:flex; align-items:baseline; justify-content:center; gap:8px; margin:2px 0}
+    .stat-row .val{font-weight:900}
+    .stat-row.today{color:#14734D}
+    .stat-row.today .val{font-size:20px}
+    .stat-row.week{color:#5A3EAB}
+    .stat-row.week .val{font-size:18px}
+    .unit{font-size:12px; color:var(--lp-muted)}
+
+    .stack{position:relative; width:270px; height:270px; margin:6px auto 6px}
+    .weekly, .daily{position:absolute; inset:0; display:block}
+    .weekly svg, .daily svg{width:100%; height:100%; transform:rotate(-90deg)}
+
+    .weekly-bg{stroke:rgba(168,140,245,.28)}
+    .weekly-fg{stroke:#A88CF5; stroke-width:18; stroke-linecap:round; transition:stroke-dashoffset 1.1s ease}
+    .daily-bg{stroke:rgba(35,192,116,.24)}
+    .daily-fg{stroke:#39D991; stroke-width:18; stroke-linecap:round; transition:stroke-dashoffset .9s ease}
+
+    .footer{
+      display:flex; gap:14px; justify-content:space-around; padding-top:8px;
+    }
+    .kpi{text-align:center}
+    .kpi .val{font-weight:900; font-size:15px}
+    .kpi .label{color:var(--lp-muted); font-size:11px; letter-spacing:.2px}
+    .kpi .val.today{color:#14734D}
+    .kpi .val.week{color:#5A3EAB}
+  </style>
+</head>
+<body>
+  <!-- Snackcercise -->
+  <section class="card">
+    <h2>Snackcercise</h2>
+
+    <!-- Light chips to reduce visual weight -->
+    <div class="chips" aria-label="所在環境">
+      <div class="chip active">家裡</div>
+      <div class="chip">辦公室</div>
+      <div class="chip">健身房</div>
+      <div class="chip">車站</div>
+    </div>
+
+    <div class="exercise-title">靠牆深蹲</div>
+    <div class="intensity-labels"><span>更輕</span><span>更強</span></div>
+    <div class="controls">
+      <div class="control-btn" title="降一級">−</div>
+      <div class="play-btn" title="開始">▶</div>
+      <div class="control-btn" title="升一級">＋</div>
+    </div>
+    <div class="swap"><button title="換一個">換一個 🔄</button></div>
+  </section>
+
+  <!-- Progress (LP card) -->
+  <section class="lp-card">
+    <h2 class="lp-title">進度追蹤</h2>
+
+    <!-- 今日（上方，綠色） -->
+    <div class="stat-row today">
+      <span>今日</span>
+      <span class="val" id="dayText">12 / 20</span>
+      <span class="unit">分鐘</span>
+    </div>
+
+    <!-- Double rings -->
+    <div class="stack" data-today="12" data-todaygoal="20" data-week="90" data-weekgoal="150">
+      <div class="weekly">
+        <svg viewBox="0 0 270 270" aria-label="weekly">
+          <circle class="weekly-bg" cx="135" cy="135" r="108" fill="none" stroke-width="18"/>
+          <circle id="weekArc" class="weekly-fg" cx="135" cy="135" r="108" fill="none"
+                  stroke-dasharray="679" stroke-dashoffset="679"/>
+        </svg>
+      </div>
+      <div class="daily">
+        <svg viewBox="0 0 210 210" aria-label="daily" style="position:absolute; top:30px; left:30px;">
+          <circle class="daily-bg" cx="105" cy="105" r="90" fill="none" stroke-width="18"/>
+          <circle id="dayArc" class="daily-fg" cx="105" cy="105" r="90" fill="none"
+                  stroke-dasharray="565" stroke-dashoffset="565"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 本週（下方，紫色） -->
+    <div class="stat-row week">
+      <span>本週</span>
+      <span class="val" id="weekText">90 / 150</span>
+      <span class="unit">分鐘</span>
+    </div>
+
+    <div class="footer">
+      <div class="kpi">
+        <div class="val today" id="dayPct">60%</div>
+        <div class="label">今日完成</div>
+      </div>
+      <div class="kpi">
+        <div class="val week" id="weekPct">60%</div>
+        <div class="label">本週完成</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function(){
+      const el = document.querySelector('.stack');
+      const d = +el.dataset.today || 0;
+      const dg = +el.dataset.todaygoal || 1;
+      const w = +el.dataset.week || 0;
+      const wg = +el.dataset.weekgoal || 1;
+
+      const dayPct = Math.max(0, Math.min(1, d/dg));
+      const weekPct = Math.max(0, Math.min(1, w/wg));
+
+      document.getElementById('dayText').textContent = `${d} / ${dg}`;
+      document.getElementById('weekText').textContent = `${w} / ${wg}`;
+      document.getElementById('dayPct').textContent = Math.round(dayPct*100) + '%';
+      document.getElementById('weekPct').textContent = Math.round(weekPct*100) + '%';
+
+      const dayCirc = 2*Math.PI*90;
+      const weekCirc = 2*Math.PI*108;
+      const dayOff = dayCirc*(1 - dayPct);
+      const weekOff = weekCirc*(1 - weekPct);
+      requestAnimationFrame(()=>{
+        document.getElementById('dayArc').setAttribute('stroke-dashoffset', dayOff);
+        document.getElementById('weekArc').setAttribute('stroke-dashoffset', weekOff);
+      });
+    })();
+  </script>
+</body>
+</html>
