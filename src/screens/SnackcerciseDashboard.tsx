@@ -1,6 +1,7 @@
 // SnackcerciseDashboard.tsx
 import React, { useCallback, useMemo, useState } from "react";
-import { View, Text, StyleSheet, Pressable, LayoutChangeEvent } from "react-native";
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Path, Line, Polygon, Rect } from "react-native-svg";
 
 /** Helpers */
