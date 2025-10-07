@@ -1,5 +1,6 @@
 import React from "react";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -34,37 +35,38 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer theme={NavTheme}>
-      <StatusBar style="light" />
-
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarShowLabel: true,
-          tabBarActiveTintColor: colors.text,
-          tabBarInactiveTintColor: colors.muted,
-          tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.hair,
-          },
-          tabBarIcon: ({ color, size }) => {
-            if (route.name === "Snack") {
-              return (
-                <MaterialCommunityIcons name="run" size={size} color={color} />
-              );
-            }
-            if (route.name === "Stats") {
-              return <Feather name="bar-chart-2" size={size} color={color} />;
-            }
-            return <Feather name="settings" size={size} color={color} />;
-          },
-        })}
-      >
-        {/* 將新的 Dashboard 放在 Snack 分頁 */}
-        <Tab.Screen name="Snack" component={SnackcerciseDashboard} />
-        <Tab.Screen name="Stats" component={Stats} />
-        <Tab.Screen name="Settings" component={Settings} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer theme={NavTheme}>
+        <StatusBar style="light" />
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarShowLabel: true,
+            tabBarActiveTintColor: colors.text,
+            tabBarInactiveTintColor: colors.muted,
+            tabBarStyle: {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.hair,
+            },
+            tabBarIcon: ({ color, size }) => {
+              if (route.name === "Snack") {
+                return (
+                  <MaterialCommunityIcons name="run" size={size} color={color} />
+                );
+              }
+              if (route.name === "Stats") {
+                return <Feather name="bar-chart-2" size={size} color={color} />;
+              }
+              return <Feather name="settings" size={size} color={color} />;
+            },
+          })}
+        >
+          {/* 將新的 Dashboard 放在 Snack 分頁 */}
+          <Tab.Screen name="Snack" component={SnackcerciseDashboard} />
+          <Tab.Screen name="Stats" component={Stats} />
+          <Tab.Screen name="Settings" component={Settings} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
