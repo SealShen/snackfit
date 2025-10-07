@@ -60,6 +60,10 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [actionIdx, setActionIdx] = useState(0);
   const [size, setSize] = useState(360);
   const [activeLocation, setActiveLocation] = useState(0);
+  const insets = useSafeAreaInsets();
+  
+  // Calculate safe top padding for Dynamic Island
+  const safeTopPadding = Math.max(insets.top, 20) + 20;
 
   const actionName = useMemo(() => {
     return actionIdx === 0 ? initialActionName : actionPool[(actionIdx - 1) % actionPool.length];
@@ -197,7 +201,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     );
 
   return (
-    <View style={styles.container} onLayout={onLayout}>
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 20) + 20 }]} onLayout={onLayout}>
       {/* Brand */}
       <Text style={styles.title}>SnackFit</Text>
 
@@ -350,7 +354,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     backgroundColor: "#0E0E10",
-    paddingVertical: 24,
     paddingHorizontal: 24,
   },
   title: {
@@ -358,12 +361,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#EAEAF0",
     letterSpacing: 0.5,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   chipsRow: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   chip: {
     paddingHorizontal: 12,
@@ -391,7 +394,7 @@ const styles = StyleSheet.create({
   },
   actionCapsule: {
     position: "absolute",
-    top: -8,
+    top: -18,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
