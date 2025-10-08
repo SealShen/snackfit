@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SnackFit v6 – Action Pad（ZMDI 最終版）</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/material-design-iconic-font@2.2.0/dist/css/material-design-iconic-font.min.css">
+<style>
+  :root{ --bg:#0E0E10; --surface:#16161A; --hair:#2A2B31; --text:#EAEAF0; --green:#23C074; --glass:rgba(255,255,255,.06); --glass-brd:rgba(255,255,255,.10); }
+  *{box-sizing:border-box; user-select:none}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif; display:flex; justify-content:center; padding:24px}
+  .wrap{width:100%; max-width:440px}
+  .title{font-weight:900; font-size:28px; text-align:center; margin:4px 0 10px}
+  .stage{position:relative; width:360px; height:420px; margin:8px auto 0}
+  .ringwrap{position:absolute; top:44px; left:50%; transform:translateX(-50%); width:360px; height:360px}
+  .capsule{position:absolute; left:50%; top:-8px; transform:translate(-50%,0); display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--glass-brd); backdrop-filter:blur(12px); box-shadow:0 6px 14px rgba(0,0,0,.45); font-weight:900; font-size:18px; z-index:5}
+  .capsule__icon{width:22px; height:22px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#FDE3A7,#F9B4D0); color:#1A1A1E; font-size:12px}
+  .divider{ stroke:rgba(255,255,255,.12); stroke-width:1 }
+  .play{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:110px; height:110px; border-radius:55px; background:#1F1F24; border:4px solid var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(35,192,116,.35); z-index:4; cursor:pointer; transition:transform .15s ease}
+  .play:active{transform:translate(-50%,-50%) scale(.9)}
+  .play svg{width:40px; height:40px; fill:var(--green)}
+  .sector{cursor:pointer; transform-box:fill-box; transform-origin:center}
+  .sector-fill{fill:rgba(255,255,255,.06); stroke:rgba(255,255,255,.14); stroke-width:1}
+  .btn-icon{position:absolute;width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:rgba(0,0,0,.35);color:#EAEAF0;border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 12px rgba(0,0,0,.4);z-index:5}
+  .btn-icon i{font-size:20px;line-height:1}
+  .top{left:50%;top:calc(50% - 88px);transform:translate(-50%,-50%)}
+  .right{left:calc(50% + 88px);top:50%;transform:translate(-50%,-50%)}
+  .bottom{left:50%;top:calc(50% + 88px);transform:translate(-50%,-50%)}
+  .left{left:calc(50% - 88px);top:50%;transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">SnackFit</div>
+
+    <div class="stage">
+      <div class="ringwrap">
+        <div class="capsule" id="actionCapsule"><span class="capsule__icon">🍪</span><span id="exerciseName">深蹲</span></div>
+
+        <svg id="ringSvg" width="360" height="360" viewBox="0 0 360 360" aria-label="控制盤">
+          <g transform="rotate(-90 180 180)">
+            <circle cx="180" cy="180" r="150" stroke="rgba(168,140,245,.20)" stroke-width="24" fill="none"/>
+            <circle id="outerProg" cx="180" cy="180" r="150" stroke="#A88CF5" stroke-width="24" stroke-linecap="round" fill="none" stroke-dasharray="0 942"/>
+            <circle cx="180" cy="180" r="118" stroke="rgba(35,192,116,.20)" stroke-width="24" fill="none"/>
+            <circle id="innerProg" cx="180" cy="180" r="118" stroke="#23C074" stroke-width="24" stroke-linecap="round" fill="none" stroke-dasharray="0 741"/>
+          </g>
+          <g id="dividers"></g>
+          <g id="sectors"></g>
+        </svg>
+
+        <button id="btnTop" class="btn-icon top" aria-label="換一個"><i class="zmdi zmdi-refresh-alt"></i></button>
+        <button id="btnRight" class="btn-icon right" aria-label="增加強度"><i class="zmdi zmdi-chevron-up"></i></button>
+        <button id="btnBottom" class="btn-icon bottom" aria-label="動作教學"><i class="zmdi zmdi-help-outline"></i></button>
+        <button id="btnLeft" class="btn-icon left" aria-label="降低強度"><i class="zmdi zmdi-chevron-down"></i></button>
+
+        <button class="play" id="playBtn" aria-label="播放或暫停">
+          <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const exercises=["深蹲","伏地挺身","弓箭步","平板支撐","開合跳"]; let exIndex=0, playing=false, intensity=3;
+const cx=180, cy=180; const rOuter=150, rInner=118; const r2=104, r1=72;
+const arcs=[{id:'top',a0:-45,a1:45,action:'swap'},{id:'right',a0:45,a1:135,action:'plus'},{id:'bottom',a0:135,a1:225,action:'help'},{id:'left',a0:225,a1:315,action:'minus'}];
+const divAngles=[45,135,225,315];
+const rad=(d)=> (Math.PI/180)*(d-90);
+function polar(r, deg){ const t=rad(deg); return [cx + r*Math.cos(t), cy + r*Math.sin(t)]; }
+function donutPath(rInner,rOuter,a0,a1){ const large=(a1-a0)>180?1:0; const [x0,y0]=polar(rOuter,a0), [x1,y1]=polar(rOuter,a1); const [x2,y2]=polar(rInner,a1), [x3,y3]=polar(rInner,a0); return `M ${x0} ${y0} A ${rOuter} ${rOuter} 0 ${large} 1 ${x1} ${y1} L ${x2} ${y2} A ${rInner} ${rInner} 0 ${large} 0 ${x3} ${y3} Z`; }
+function n(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+const divG=document.getElementById('dividers');
+divAngles.forEach(a=>{ const [xA,yA]=polar(r1,a), [xB,yB]=polar(r2,a); const line=n('line'); line.setAttribute('x1',xA); line.setAttribute('y1',yA); line.setAttribute('x2',xB); line.setAttribute('y2',yB); line.setAttribute('class','divider'); divG.appendChild(line); });
+const sectors=document.getElementById('sectors');
+arcs.forEach(cfg=>{ const g=n('g'); g.setAttribute('class','sector'); g.setAttribute('id',`sector-${cfg.id}`); const p=n('path'); p.setAttribute('class','sector-fill'); p.setAttribute('d',donutPath(r1,r2,cfg.a0,cfg.a1)); g.appendChild(p); g.addEventListener('click',()=>act(cfg.action)); sectors.appendChild(g); });
+const cap=document.getElementById('actionCapsule'); const nameEl=document.getElementById('exerciseName');
+function swapExercise(){ exIndex=(exIndex+1)%exercises.length; nameEl.textContent=exercises[exIndex]; cap.classList.remove('is-anim'); void cap.offsetWidth; cap.classList.add('is-anim'); }
+function act(type){ if(type==='swap'){ swapExercise(); } if(type==='plus'){ intensity=Math.min(5,++intensity); swapExercise(); } if(type==='minus'){ intensity=Math.max(1,--intensity); swapExercise(); } if(type==='help'){ alert('前往動作教學'); } }
+['Top','Right','Bottom','Left'].forEach(id=>{ document.getElementById('btn'+id).addEventListener('click',()=>{ const map={Top:'swap',Right:'plus',Bottom:'help',Left:'minus'}; act(map[id]); }); });
+document.getElementById('playBtn').addEventListener('click',()=>{ playing=!playing; const icon=document.getElementById('playIcon'); icon.innerHTML = playing ? '<rect x="7" y="5" width="4" height="14" rx="1.5" fill="#23C074"/><rect x="13" y="5" width="4" height="14" rx="1.5" fill="#23C074"/>' : '<path d="M8 5v14l11-7z" fill="#23C074"/>'; });
+</script>
+</body>
+</html>

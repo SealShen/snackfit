@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SnackFit v7 – 融合扇形按鈕</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/material-design-iconic-font@2.2.0/dist/css/material-design-iconic-font.min.css">
+<style>
+  :root{ --bg:#0E0E10; --surface:#16161A; --hair:#2A2B31; --text:#EAEAF0; --muted:#A0A1B2; --purple:#A88CF5; --green:#23C074; --glass:rgba(255,255,255,.06); --glass-brd:rgba(255,255,255,.10); }
+  *{box-sizing:border-box; user-select:none}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif; display:flex; justify-content:center; padding:24px}
+  .wrap{width:100%; max-width:440px}
+  .title{font-weight:900; font-size:28px; text-align:center; margin:4px 0 10px}
+  
+  /* glass chips */
+  .glass {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 8px auto 16px;
+  }
+
+  .chip {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: rgba(26, 26, 30, .6);
+    backdrop-filter: blur(12px);
+    color: #CFCFD8;
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  .chip.is-active {
+    background: rgba(168, 140, 245, .26);
+    border-color: var(--purple);
+    color: var(--text);
+  }
+  
+  .stage{position:relative; width:360px; height:420px; margin:8px auto 0}
+  .ringwrap{position:absolute; top:44px; left:50%; transform:translateX(-50%); width:360px; height:360px}
+  .capsule{position:absolute; left:50%; top:-8px; transform:translate(-50%,0); display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--glass-brd); backdrop-filter:blur(12px); box-shadow:0 6px 14px rgba(0,0,0,.45); font-weight:900; font-size:18px; z-index:5}
+  .capsule__icon{width:22px; height:22px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#FDE3A7,#F9B4D0); color:#1A1A1E; font-size:12px}
+  .divider{ stroke:rgba(255,255,255,.12); stroke-width:1 }
+  .play{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:130px; height:130px; border-radius:65px; background:#1F1F24; border:4px solid var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(35,192,116,.35); z-index:4; cursor:pointer; transition:transform .15s ease}
+  .play:active{transform:translate(-50%,-50%) scale(.95)}
+  .play svg{width:44px; height:44px; fill:var(--green)}
+  .sector{cursor:pointer; transform-box:fill-box; transform-origin:center; transition:opacity .2s ease}
+  .sector:hover{opacity:.85}
+  .sector:active{opacity:.65}
+  .sector-fill{fill:rgba(255,255,255,.08); stroke:rgba(255,255,255,.18); stroke-width:1.5}
+  .sector-icon{fill:#EAEAF0; pointer-events:none}
+  
+  /* stats card */
+  .card {
+    margin: 14px auto 0;
+    width: 92%;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  
+  .row:last-child {
+    margin-bottom: 0;
+  }
+
+  .k { font-weight: 700; }
+  .v { font-weight: 800; }
+  .k.green, .v.green { color: var(--green); }
+  .k.purple, .v.purple { color: var(--purple); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">SnackFit</div>
+
+    <div class="stage">
+      <!-- 地點 chips -->
+      <div class="glass">
+        <div class="chip is-active">家裡</div>
+        <div class="chip">辦公室</div>
+        <div class="chip">健身房</div>
+        <div class="chip">車站</div>
+      </div>
+      
+      <div class="ringwrap">
+        <div class="capsule" id="actionCapsule"><span class="capsule__icon">🍪</span><span id="exerciseName">深蹲</span></div>
+
+        <svg id="ringSvg" width="360" height="360" viewBox="0 0 360 360" aria-label="控制盤">
+          <g transform="rotate(-90 180 180)">
+            <circle cx="180" cy="180" r="150" stroke="rgba(168,140,245,.20)" stroke-width="24" fill="none"/>
+            <circle id="outerProg" cx="180" cy="180" r="150" stroke="#A88CF5" stroke-width="24" stroke-linecap="round" fill="none" stroke-dasharray="565 942"/>
+            <circle cx="180" cy="180" r="118" stroke="rgba(35,192,116,.20)" stroke-width="24" fill="none"/>
+            <circle id="innerProg" cx="180" cy="180" r="118" stroke="#23C074" stroke-width="24" stroke-linecap="round" fill="none" stroke-dasharray="444 741"/>
+          </g>
+          <g id="dividers"></g>
+          <g id="sectors"></g>
+        </svg>
+
+        <button class="play" id="playBtn" aria-label="播放或暫停">
+          <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 進度卡 -->
+    <div class="card">
+      <div class="row">
+        <div class="k green">今日進度</div>
+        <div class="v green"><span id="dVal">12</span>/<span id="dGoal">20</span> 分鐘</div>
+      </div>
+      <div class="row">
+        <div class="k purple">本週進度</div>
+        <div class="v purple"><span id="wVal">90</span>/<span id="wGoal">150</span> 分鐘</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const today = { val: 12, goal: 20 };
+const week  = { val: 90, goal: 150 };
+
+document.getElementById('dVal').textContent = today.val; 
+document.getElementById('dGoal').textContent = today.goal;
+document.getElementById('wVal').textContent = week.val;  
+document.getElementById('wGoal').textContent = week.goal;
+
+const exercises=["深蹲","伏地挺身","弓箭步","平板支撐","開合跳"]; 
+let exIndex=0, playing=false, intensity=3;
+const cx=180, cy=180; 
+const rOuter=150, rInner=118; 
+const r2=110, r1=68;
+const arcs=[
+  {id:'top',a0:-45,a1:45,action:'swap',icon:'M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z'},
+  {id:'right',a0:45,a1:135,action:'plus',icon:'M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z'},
+  {id:'bottom',a0:135,a1:225,action:'help',icon:'M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z'},
+  {id:'left',a0:225,a1:315,action:'minus',icon:'M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z'}
+];
+const divAngles=[45,135,225,315];
+const rad=(d)=> (Math.PI/180)*(d-90);
+function polar(r, deg){ const t=rad(deg); return [cx + r*Math.cos(t), cy + r*Math.sin(t)]; }
+function donutPath(rInner,rOuter,a0,a1){ 
+  const large=(a1-a0)>180?1:0; 
+  const [x0,y0]=polar(rOuter,a0), [x1,y1]=polar(rOuter,a1); 
+  const [x2,y2]=polar(rInner,a1), [x3,y3]=polar(rInner,a0); 
+  return `M ${x0} ${y0} A ${rOuter} ${rOuter} 0 ${large} 1 ${x1} ${y1} L ${x2} ${y2} A ${rInner} ${rInner} 0 ${large} 0 ${x3} ${y3} Z`; 
+}
+function n(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+
+const divG=document.getElementById('dividers');
+divAngles.forEach(a=>{ 
+  const [xA,yA]=polar(r1,a), [xB,yB]=polar(r2,a); 
+  const line=n('line'); 
+  line.setAttribute('x1',xA); 
+  line.setAttribute('y1',yA); 
+  line.setAttribute('x2',xB); 
+  line.setAttribute('y2',yB); 
+  line.setAttribute('class','divider'); 
+  divG.appendChild(line); 
+});
+
+const sectors=document.getElementById('sectors');
+arcs.forEach(cfg=>{ 
+  const g=n('g'); 
+  g.setAttribute('class','sector'); 
+  g.setAttribute('id',`sector-${cfg.id}`); 
+  
+  const p=n('path'); 
+  p.setAttribute('class','sector-fill'); 
+  p.setAttribute('d',donutPath(r1,r2,cfg.a0,cfg.a1)); 
+  g.appendChild(p); 
+  
+  const midAngle = (cfg.a0 + cfg.a1) / 2;
+  const iconR = (r1 + r2) / 2;
+  const [iconX, iconY] = polar(iconR, midAngle);
+  
+  const iconG = n('g');
+  iconG.setAttribute('class', 'sector-icon');
+  iconG.setAttribute('transform', `translate(${iconX-12}, ${iconY-12})`);
+  
+  const iconPath = n('path');
+  iconPath.setAttribute('d', cfg.icon);
+  iconPath.setAttribute('fill', '#EAEAF0');
+  iconG.appendChild(iconPath);
+  
+  g.appendChild(iconG);
+  g.addEventListener('click',()=>act(cfg.action)); 
+  sectors.appendChild(g); 
+});
+
+const cap=document.getElementById('actionCapsule'); 
+const nameEl=document.getElementById('exerciseName');
+
+function swapExercise(){ 
+  exIndex=(exIndex+1)%exercises.length; 
+  nameEl.textContent=exercises[exIndex]; 
+}
+
+function act(type){ 
+  if(type==='swap'){ swapExercise(); } 
+  if(type==='plus'){ intensity=Math.min(5,++intensity); swapExercise(); } 
+  if(type==='minus'){ intensity=Math.max(1,--intensity); swapExercise(); } 
+  if(type==='help'){ alert('前往動作教學'); } 
+}
+
+document.getElementById('playBtn').addEventListener('click',()=>{ 
+  playing=!playing; 
+  const icon=document.getElementById('playIcon'); 
+  icon.innerHTML = playing ? '<rect x="7" y="5" width="4" height="14" rx="1.5" fill="#23C074"/><rect x="13" y="5" width="4" height="14" rx="1.5" fill="#23C074"/>' : '<path d="M8 5v14l11-7z" fill="#23C074"/>'; 
+});
+</script>
+</body>
+</html>
