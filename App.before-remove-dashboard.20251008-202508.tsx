@@ -5,6 +5,7 @@ import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import Dashboard from "./src/screens/Dashboard";
 import SnackcerciseDashboard from "./src/screens/SnackcerciseDashboard";
 import Stats from "./src/screens/Stats";
 import Settings from "./src/screens/Settings";
@@ -28,7 +29,7 @@ function TabIcon({ name, color, size }: { name: any; color: string; size: number
 }
 
 export default function App() {
-  // --- SnackFit Engine Mount ---
+  // --- SnackFit Engine Mount (clean) ---
   React.useEffect(() => {
     let mounted = true;
     (async () => {
@@ -52,7 +53,6 @@ export default function App() {
       <NavigationContainer theme={MyTheme}>
         <StatusBar style="light" />
         <Tab.Navigator
-          initialRouteName="Snacks"
           screenOptions={({ route }) => ({
             headerShown: false,
             tabBarActiveTintColor: "#A88CF5",
@@ -60,6 +60,7 @@ export default function App() {
             tabBarStyle: { backgroundColor: "#16161A", borderTopColor: "#2A2B31" },
             tabBarIcon: ({ color, size }) => {
               const map: Record<string, any> = {
+                Home: "home-variant",
                 Snacks: "food-apple",
                 Stats: "chart-line",
                 Settings: "cog",
@@ -68,9 +69,10 @@ export default function App() {
             },
           })}
         >
-          <Tab.Screen name="Snacks" component={SnackcerciseDashboard} options={{ title: "Snacks" }} />
-          <Tab.Screen name="Stats" component={Stats} options={{ title: "Stats" }} />
-          <Tab.Screen name="Settings" component={Settings} options={{ title: "Settings" }} />
+          <Tab.Screen name="Home" component={Dashboard} />
+          <Tab.Screen name="Snacks" component={SnackcerciseDashboard} />
+          <Tab.Screen name="Stats" component={Stats} />
+          <Tab.Screen name="Settings" component={Settings} />
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
