@@ -37,8 +37,8 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [currentCard, setCurrentCard] = useState(0);
   const [size, setSize] = useState(360);
   const [activeLocation, setActiveLocation] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(120); // 預設 2 分鐘（120 秒）
-  const [initialTime, setInitialTime] = useState(120);
+  const [timeLeft, setTimeLeft] = useState(60); // 測試用：1 分鐘
+  const [initialTime, setInitialTime] = useState(60);
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [weekMinutes, setWeekMinutes] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -73,7 +73,8 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         getWeekStats(),
       ]);
       setTodayMinutes(todayStats.totalMinutes);
-      setWeekMinutes(weekStats.totalMinutes);
+      // 週進度加上預設的 30 分鐘（模擬已完成 20%）
+      setWeekMinutes(weekStats.totalMinutes + 30);
     } catch (error) {
       console.error('Failed to load progress:', error);
     }
