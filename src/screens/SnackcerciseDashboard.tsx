@@ -95,8 +95,17 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     const location = locations[activeLocation];
 
     try {
-      // 觸覺回饋
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // 觸覺回饋 - 嘗試多種方式確保震動
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {
+        // 如果 notification 失敗，嘗試 impact
+        try {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } catch (e2) {
+          console.log('Haptics not available:', e2);
+        }
+      }
 
       // 脈衝動畫
       Animated.sequence([
