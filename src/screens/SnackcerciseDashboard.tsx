@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimen
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -22,8 +23,8 @@ export type SnackcerciseDashboardProps = {
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
-  dayProgress = 0.6,
-  weekProgress = 0.6,
+  dayProgress: _dayProgress = 0.6,
+  weekProgress: _weekProgress = 0.6,
   initialIntensity = 3,
   initialActionName = "Squat",
   actionPool = ["Push-ups", "Lunges", "Plank", "Jumping Jacks"],
@@ -38,9 +39,19 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [activeLocation, setActiveLocation] = useState(0);
   const [timeLeft, setTimeLeft] = useState(120); // 預設 2 分鐘（120 秒）
   const [initialTime, setInitialTime] = useState(120);
+  const [todayMinutes, setTodayMinutes] = useState(0);
+  const [weekMinutes, setWeekMinutes] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const insets = useSafeAreaInsets();
+
+  // 目標值
+  const DAY_TARGET = 20; // 每日目標 20 分鐘
+  const WEEK_TARGET = 150; // 每週目標 150 分鐘
+
+  // 計算實際進度
+  const dayProgress = calculateProgress(todayMinutes, DAY_TARGET);
+  const weekProgress = calculateProgress(weekMinutes, WEEK_TARGET);
 
   const safeTopPadding = Math.max(insets.top, 20) + 20;
 
@@ -54,16 +65,49 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   // 計算計時器進度 (0-1)
   const timerProgress = initialTime > 0 ? (initialTime - timeLeft) / initialTime : 0;
 
+  // 載入進度資料
+  const loadProgress = useCallback(async () => {
+    try {
+      const [todayStats, weekStats] = await Promise.all([
+        getTodayStats(),
+        getWeekStats(),
+      ]);
+      setTodayMinutes(todayStats.totalMinutes);
+      setWeekMinutes(weekStats.totalMinutes);
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    }
+  }, []);
+
+  // 組件載入時讀取進度
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
+
+  // 完成運動並儲存記錄
+  const completeWorkout = useCallback(async () => {
+    const exerciseName = exerciseCards[currentCard].name;
+    const location = locations[activeLocation];
+
+    try {
+      await saveWorkout(exerciseName, initialTime, location);
+      // 重新載入進度
+      await loadProgress();
+    } catch (error) {
+      console.error('Failed to save workout:', error);
+    }
+  }, [exerciseCards, currentCard, initialTime, locations, activeLocation, loadProgress]);
+
   // 計時器 effect
   useEffect(() => {
     if (playing && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            // 時間到！
+            // 時間到！完成運動
             setPlaying(false);
             onPlayToggle?.(false);
-            // 這裡之後可以觸發完成動畫
+            completeWorkout(); // 儲存記錄
             return 0;
           }
           return prev - 1;
@@ -81,7 +125,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, [playing, timeLeft, onPlayToggle]);
+  }, [playing, timeLeft, onPlayToggle, completeWorkout]);
 
   // 建立運動卡片資料
   const exerciseCards = useMemo(
@@ -281,11 +325,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.labelGreen}>Today</Text>
-          <Text style={styles.valueGreen}>{Math.round(dayProgress * 20)}/{20} min</Text>
+          <Text style={styles.valueGreen}>{todayMinutes}/{DAY_TARGET} min</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.labelPurple}>This Week</Text>
-          <Text style={styles.valuePurple}>{Math.round(weekProgress * 150)}/{150} min</Text>
+          <Text style={styles.valuePurple}>{weekMinutes}/{WEEK_TARGET} min</Text>
         </View>
       </View>
     </View>
