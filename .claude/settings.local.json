@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(npx expo start:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

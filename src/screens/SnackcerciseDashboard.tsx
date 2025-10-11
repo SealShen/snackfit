@@ -1,9 +1,10 @@
 // SnackcerciseDashboard.tsx
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimensions, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from 'expo-haptics';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -41,8 +42,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [initialTime, setInitialTime] = useState(60);
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [weekMinutes, setWeekMinutes] = useState(0);
+  const [showCompleted, setShowCompleted] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const completedOpacity = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
   // 目標值
@@ -91,13 +95,46 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     const location = locations[activeLocation];
 
     try {
+      // 觸覺回饋
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      // 脈衝動畫
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // 顯示完成訊息
+      setShowCompleted(true);
+      Animated.sequence([
+        Animated.timing(completedOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1500),
+        Animated.timing(completedOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setShowCompleted(false));
+
       await saveWorkout(exerciseName, initialTime, location);
       // 重新載入進度
       await loadProgress();
     } catch (error) {
       console.error('Failed to save workout:', error);
     }
-  }, [exerciseCards, currentCard, initialTime, locations, activeLocation, loadProgress]);
+  }, [exerciseCards, currentCard, initialTime, locations, activeLocation, loadProgress, pulseAnim, completedOpacity]);
 
   // 計時器 effect
   useEffect(() => {
@@ -280,12 +317,20 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           >
             {exerciseCards.map((card, idx) => (
               <View key={idx} style={[styles.cardPage, { width: cardSize, height: cardSize }]}>
-                <View style={styles.cardContent}>
+                <Animated.View style={[styles.cardContent, { transform: [{ scale: pulseAnim }] }]}>
                   <MaterialCommunityIcons name={card.sportIcon} size={28} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
 
                   {/* 倒數計時顯示 */}
                   <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+
+                  {/* 完成訊息 */}
+                  {showCompleted && (
+                    <Animated.View style={[styles.completedBadge, { opacity: completedOpacity }]}>
+                      <MaterialCommunityIcons name="check-circle" size={24} color="#23C074" />
+                      <Text style={styles.completedText}>完成！</Text>
+                    </Animated.View>
+                  )}
 
                   {/* 按鈕組 */}
                   <View style={styles.buttonRow}>
@@ -315,7 +360,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                       />
                     ))}
                   </View>
-                </View>
+                </Animated.View>
               </View>
             ))}
           </ScrollView>
@@ -375,6 +420,28 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginVertical: 8,
     fontVariant: ["tabular-nums"],
+  },
+
+  completedBadge: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -80 }, { translateY: -25 }],
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(35,192,116,.95)",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+    zIndex: 10,
+  },
+
+  completedText: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#FFF",
+    letterSpacing: 1,
   },
 
   buttonRow: {
