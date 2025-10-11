@@ -6,6 +6,15 @@ import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
+import {
+  TrainingPhase,
+  ExerciseLevel,
+  generateGuidanceCues,
+  getCurrentGuidance,
+  calculateTargetHRZone,
+  BURPEE_LEVELS,
+} from "../services/exercise-guidance";
+import { HeartRateSimulator, createDefaultSimulator } from "../services/heart-rate-simulator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -43,8 +52,16 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [weekMinutes, setWeekMinutes] = useState(0);
   const [showCompleted, setShowCompleted] = useState(false);
+
+  // 新增：訓練階段與等級
+  const [currentPhase, setCurrentPhase] = useState<TrainingPhase>('P1');
+  const [currentLevel, setCurrentLevel] = useState<ExerciseLevel>(2); // 預設 Level 2
+  const [currentHR, setCurrentHR] = useState(65); // 模擬當前心率
+  const [currentGuidance, setCurrentGuidance] = useState<string>('');
+
   const scrollViewRef = useRef<ScrollView>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const hrSimulatorRef = useRef<HeartRateSimulator | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const completedOpacity = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
@@ -88,6 +105,24 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
+
+  // 初始化心率模擬器和指導語
+  useEffect(() => {
+    hrSimulatorRef.current = createDefaultSimulator(initialTime);
+  }, [initialTime]);
+
+  // 計算目標心率區間
+  const targetHRZone = useMemo(() => {
+    const restingHR = 65;
+    const maxHR = 185;
+    const zone = currentPhase === 'P0' || currentPhase === 'P1' ? 3 : 4;
+    return calculateTargetHRZone(restingHR, maxHR, zone);
+  }, [currentPhase]);
+
+  // 生成指導語
+  const guidanceCues = useMemo(() => {
+    return generateGuidanceCues(currentPhase, currentLevel, initialTime);
+  }, [currentPhase, currentLevel, initialTime]);
 
   // 完成運動並儲存記錄
   const completeWorkout = useCallback(async () => {
@@ -150,19 +185,34 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     }
   }, [exerciseCards, currentCard, initialTime, locations, activeLocation, loadProgress, pulseAnim, completedOpacity]);
 
-  // 計時器 effect
+  // 計時器 effect（同時更新心率和指導語）
   useEffect(() => {
     if (playing && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev <= 1) {
+          const newTimeLeft = prev - 1;
+          const elapsedSeconds = initialTime - newTimeLeft;
+
+          // 更新心率模擬
+          if (hrSimulatorRef.current) {
+            const newHR = hrSimulatorRef.current.getCurrentHeartRate(elapsedSeconds);
+            setCurrentHR(newHR);
+          }
+
+          // 更新指導語
+          const guidance = getCurrentGuidance(guidanceCues, elapsedSeconds);
+          if (guidance) {
+            setCurrentGuidance(guidance.message);
+          }
+
+          if (newTimeLeft <= 0) {
             // 時間到！完成運動
             setPlaying(false);
             onPlayToggle?.(false);
             completeWorkout(); // 儲存記錄
             return 0;
           }
-          return prev - 1;
+          return newTimeLeft;
         });
       }, 1000);
     } else {
@@ -177,7 +227,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, [playing, timeLeft, onPlayToggle, completeWorkout]);
+  }, [playing, timeLeft, onPlayToggle, completeWorkout, guidanceCues, initialTime]);
 
   // 建立運動卡片資料
   const exerciseCards = useMemo(
@@ -335,6 +385,9 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                   <MaterialCommunityIcons name={card.sportIcon} size={28} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
 
+                  {/* 顯示動作等級 */}
+                  <Text style={styles.levelBadge}>Level {currentLevel} · {BURPEE_LEVELS[currentLevel - 1].name}</Text>
+
                   {/* 倒數計時顯示 / 完成訊息（二選一顯示，保持位置一致） */}
                   {showCompleted ? (
                     <Animated.View style={[styles.completedBadge, { opacity: completedOpacity }]}>
@@ -343,6 +396,22 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                     </Animated.View>
                   ) : (
                     <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+                  )}
+
+                  {/* 心率顯示 */}
+                  {playing && (
+                    <View style={styles.hrContainer}>
+                      <MaterialCommunityIcons name="heart-pulse" size={18} color="#FF6B9D" />
+                      <Text style={styles.hrText}>{currentHR} bpm</Text>
+                      <Text style={styles.hrZone}>目標: {targetHRZone[0]}-{targetHRZone[1]}</Text>
+                    </View>
+                  )}
+
+                  {/* 指導語 */}
+                  {playing && currentGuidance && (
+                    <View style={styles.guidanceContainer}>
+                      <Text style={styles.guidanceText}>{currentGuidance}</Text>
+                    </View>
                   )}
 
                   {/* 按鈕組 */}
@@ -425,6 +494,61 @@ const styles = StyleSheet.create({
   cardContent: { alignItems: "center", gap: 4 },
   exerciseName: { fontSize: 22, fontWeight: "900", color: "#EAEAF0", marginTop: 4 },
   exerciseDuration: { fontSize: 14, fontWeight: "600", color: "#A0A1B2" },
+
+  levelBadge: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#A88CF5",
+    backgroundColor: "rgba(168,140,245,.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+
+  hrContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+    backgroundColor: "rgba(255,107,157,.12)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+
+  hrText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#FF6B9D",
+    fontVariant: ["tabular-nums"],
+  },
+
+  hrZone: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#FF6B9D",
+    opacity: 0.7,
+    marginLeft: 4,
+  },
+
+  guidanceContainer: {
+    backgroundColor: "rgba(35,192,116,.15)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginTop: 6,
+    maxWidth: "90%",
+  },
+
+  guidanceText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#23C074",
+    textAlign: "center",
+    lineHeight: 18,
+  },
 
   timerText: {
     fontSize: 42,
