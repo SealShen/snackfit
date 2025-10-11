@@ -201,20 +201,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
               fill="none"
               strokeDasharray={dayDash}
             />
-
-            {/* 計時器進度環（最內層，只在運動時顯示） */}
-            {playing && (
-              <Circle
-                cx={cx}
-                cy={cy}
-                r={rInner - 40}
-                stroke="#FF6B6B"
-                strokeWidth={12}
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray={[2 * Math.PI * (rInner - 40) * timerProgress, 2 * Math.PI * (rInner - 40)]}
-              />
-            )}
           </G>
         </Svg>
 
@@ -250,7 +236,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
             {exerciseCards.map((card, idx) => (
               <View key={idx} style={[styles.cardPage, { width: cardSize, height: cardSize }]}>
                 <View style={styles.cardContent}>
-                  <MaterialCommunityIcons name={card.sportIcon} size={32} color="#A88CF5" />
+                  <MaterialCommunityIcons name={card.sportIcon} size={28} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
 
                   {/* 倒數計時顯示 */}
@@ -261,7 +247,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                     <Pressable style={styles.goButton} onPress={handleToggle}>
                       <MaterialCommunityIcons
                         name={timeLeft === 0 ? "refresh" : (playing ? "pause" : "play")}
-                        size={28}
+                        size={24}
                         color="#23C074"
                       />
                       <Text style={styles.goText}>
@@ -271,7 +257,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
 
                     {(playing || timeLeft !== initialTime) && (
                       <Pressable style={styles.resetButton} onPress={handleReset}>
-                        <MaterialCommunityIcons name="restore" size={24} color="#FF6B6B" />
+                        <MaterialCommunityIcons name="stop" size={20} color="#FF6B6B" />
                       </Pressable>
                     )}
                   </View>
@@ -333,43 +319,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardPage: { justifyContent: "center", alignItems: "center" },
-  cardContent: { alignItems: "center", gap: 8 },
-  exerciseName: { fontSize: 24, fontWeight: "900", color: "#EAEAF0", marginTop: 8 },
+  cardContent: { alignItems: "center", gap: 4 },
+  exerciseName: { fontSize: 22, fontWeight: "900", color: "#EAEAF0", marginTop: 4 },
   exerciseDuration: { fontSize: 14, fontWeight: "600", color: "#A0A1B2" },
 
   timerText: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: "900",
     color: "#EAEAF0",
     letterSpacing: 2,
-    marginVertical: 12,
+    marginVertical: 8,
     fontVariant: ["tabular-nums"],
   },
 
   buttonRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 6,
   },
 
   goButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 18,
     borderRadius: 999,
     backgroundColor: "rgba(35,192,116,.15)",
     borderWidth: 2,
     borderColor: "#23C074",
   },
-  goText: { fontSize: 18, fontWeight: "900", color: "#23C074", letterSpacing: 1 },
+  goText: { fontSize: 16, fontWeight: "900", color: "#23C074", letterSpacing: 1 },
 
   resetButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "rgba(255,107,107,.15)",
     borderWidth: 2,
     borderColor: "#FF6B6B",
@@ -377,7 +363,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  pagination: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 16 },
+  pagination: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 12 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,.2)" },
   dotActive: { backgroundColor: "#B99BFF", width: 18 },
 
