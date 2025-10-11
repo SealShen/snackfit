@@ -321,15 +321,14 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                   <MaterialCommunityIcons name={card.sportIcon} size={28} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
 
-                  {/* 倒數計時顯示 */}
-                  <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-
-                  {/* 完成訊息 */}
-                  {showCompleted && (
+                  {/* 倒數計時顯示 / 完成訊息（二選一顯示，保持位置一致） */}
+                  {showCompleted ? (
                     <Animated.View style={[styles.completedBadge, { opacity: completedOpacity }]}>
-                      <MaterialCommunityIcons name="check-circle" size={24} color="#23C074" />
+                      <MaterialCommunityIcons name="check-circle" size={24} color="#FFF" />
                       <Text style={styles.completedText}>完成！</Text>
                     </Animated.View>
+                  ) : (
+                    <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
                   )}
 
                   {/* 按鈕組 */}
@@ -423,10 +422,6 @@ const styles = StyleSheet.create({
   },
 
   completedBadge: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -80 }, { translateY: -25 }],
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -434,7 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 999,
-    zIndex: 10,
+    marginVertical: 8,
   },
 
   completedText: {
