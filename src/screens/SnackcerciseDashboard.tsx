@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimen
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -95,16 +95,21 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     const location = locations[activeLocation];
 
     try {
-      // 觸覺回饋 - 嘗試多種方式確保震動
+      // 播放完成音效（替代震動）
       try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const { sound } = await Audio.Sound.createAsync(
+          // 使用系統預設的成功音效
+          { uri: 'https://cdn.freesound.org/previews/320/320655_5260872-lq.mp3' },
+          { shouldPlay: true }
+        );
+        // 播放後自動卸載
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync();
+          }
+        });
       } catch (e) {
-        // 如果 notification 失敗，嘗試 impact
-        try {
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        } catch (e2) {
-          console.log('Haptics not available:', e2);
-        }
+        console.log('Audio not available:', e);
       }
 
       // 脈衝動畫
