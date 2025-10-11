@@ -1,5 +1,5 @@
 // SnackcerciseDashboard.tsx
-import React, { useCallback, useMemo, useState, useRef } from "react";
+import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
@@ -36,10 +36,52 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [currentCard, setCurrentCard] = useState(0);
   const [size, setSize] = useState(360);
   const [activeLocation, setActiveLocation] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(120); // 預設 2 分鐘（120 秒）
+  const [initialTime, setInitialTime] = useState(120);
   const scrollViewRef = useRef<ScrollView>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const insets = useSafeAreaInsets();
 
   const safeTopPadding = Math.max(insets.top, 20) + 20;
+
+  // 格式化時間為 MM:SS
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 計算計時器進度 (0-1)
+  const timerProgress = initialTime > 0 ? (initialTime - timeLeft) / initialTime : 0;
+
+  // 計時器 effect
+  useEffect(() => {
+    if (playing && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            // 時間到！
+            setPlaying(false);
+            onPlayToggle?.(false);
+            // 這裡之後可以觸發完成動畫
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [playing, timeLeft, onPlayToggle]);
 
   // 建立運動卡片資料
   const exerciseCards = useMemo(
@@ -75,12 +117,28 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const weekDash = [weekLen * clamp(weekProgress, 0, 1), weekLen];
 
   const handleToggle = () => {
-    const val = !playing;
-    setPlaying(val);
-    onPlayToggle?.(val);
+    if (timeLeft === 0) {
+      // 重新開始
+      setTimeLeft(initialTime);
+      setPlaying(true);
+      onPlayToggle?.(true);
+    } else {
+      const val = !playing;
+      setPlaying(val);
+      onPlayToggle?.(val);
+    }
+  };
+
+  const handleReset = () => {
+    setPlaying(false);
+    setTimeLeft(initialTime);
+    onPlayToggle?.(false);
   };
 
   const handleSwap = (index: number) => {
+    // 切換運動時重置計時器
+    setPlaying(false);
+    setTimeLeft(initialTime);
     setCurrentCard(index);
     onSwap?.(exerciseCards[index].name);
   };
@@ -143,6 +201,20 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
               fill="none"
               strokeDasharray={dayDash}
             />
+
+            {/* 計時器進度環（最內層，只在運動時顯示） */}
+            {playing && (
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={rInner - 40}
+                stroke="#FF6B6B"
+                strokeWidth={12}
+                strokeLinecap="round"
+                fill="none"
+                strokeDasharray={[2 * Math.PI * (rInner - 40) * timerProgress, 2 * Math.PI * (rInner - 40)]}
+              />
+            )}
           </G>
         </Svg>
 
@@ -180,12 +252,29 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                 <View style={styles.cardContent}>
                   <MaterialCommunityIcons name={card.sportIcon} size={32} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
-                  <Text style={styles.exerciseDuration}>{card.duration}</Text>
 
-                  <Pressable style={styles.goButton} onPress={handleToggle}>
-                    <MaterialCommunityIcons name={playing ? "pause" : "play"} size={28} color="#23C074" />
-                    <Text style={styles.goText}>{playing ? "PAUSE" : "GO"}</Text>
-                  </Pressable>
+                  {/* 倒數計時顯示 */}
+                  <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+
+                  {/* 按鈕組 */}
+                  <View style={styles.buttonRow}>
+                    <Pressable style={styles.goButton} onPress={handleToggle}>
+                      <MaterialCommunityIcons
+                        name={timeLeft === 0 ? "refresh" : (playing ? "pause" : "play")}
+                        size={28}
+                        color="#23C074"
+                      />
+                      <Text style={styles.goText}>
+                        {timeLeft === 0 ? "AGAIN" : (playing ? "PAUSE" : "GO")}
+                      </Text>
+                    </Pressable>
+
+                    {(playing || timeLeft !== initialTime) && (
+                      <Pressable style={styles.resetButton} onPress={handleReset}>
+                        <MaterialCommunityIcons name="restore" size={24} color="#FF6B6B" />
+                      </Pressable>
+                    )}
+                  </View>
 
                   <View style={styles.pagination}>
                     {exerciseCards.map((_, dotIdx) => (
@@ -248,8 +337,23 @@ const styles = StyleSheet.create({
   exerciseName: { fontSize: 24, fontWeight: "900", color: "#EAEAF0", marginTop: 8 },
   exerciseDuration: { fontSize: 14, fontWeight: "600", color: "#A0A1B2" },
 
+  timerText: {
+    fontSize: 48,
+    fontWeight: "900",
+    color: "#EAEAF0",
+    letterSpacing: 2,
+    marginVertical: 12,
+    fontVariant: ["tabular-nums"],
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+
   goButton: {
-    marginTop: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -261,6 +365,17 @@ const styles = StyleSheet.create({
     borderColor: "#23C074",
   },
   goText: { fontSize: 18, fontWeight: "900", color: "#23C074", letterSpacing: 1 },
+
+  resetButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,107,107,.15)",
+    borderWidth: 2,
+    borderColor: "#FF6B6B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   pagination: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 16 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,.2)" },
