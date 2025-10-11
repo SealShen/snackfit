@@ -1,34 +1,50 @@
-﻿{
-    "expo":  {
-                 "name":  "SnackFit MVP",
-                 "slug":  "snackfit-mvp",
-                 "version":  "0.6.1",
-                 "orientation":  "portrait",
-                 "icon":  "./assets/icon.png",
-                 "splash":  {
-                                "image":  "./assets/splash.png",
-                                "resizeMode":  "contain",
-                                "backgroundColor":  "#0E0E10"
-                            },
-                 "assetBundlePatterns":  [
-                                             "**/*"
-                                         ],
-                 "ios":  {
-                             "supportsTablet":  true,
-                             "infoPlist":  {
-                                               "NSLocationWhenInUseUsageDescription":  "我們會使用您的位置來挑選適合的運動建議（例如室內/戶外、附近空間）。",
-                                               "NSUserTrackingUsageDescription":  "僅用於改善建議體驗，不會用於廣告追蹤。"
-                                           }
-                         },
-                 "android":  {
-                                 "adaptiveIcon":  {
-                                                      "foregroundImage":  "./assets/adaptive-icon.png",
-                                                      "backgroundColor":  "#0E0E10"
-                                                  }
-                             },
-                 "web":  {
-                             "bundler":  "metro",
-                             "favicon":  "./assets/favicon.png"
-                         }
-             }
+{
+  "expo": {
+    "name": "SnackFit MVP",
+    "slug": "snackfit-mvp",
+    "version": "0.6.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0E0E10"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.snackfit.mvp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "我們會使用您的位置來挑選適合的運動建議（例如室內/戶外、附近空間）。",
+        "NSUserTrackingUsageDescription": "僅用於改善建議體驗，不會用於廣告追蹤。",
+        "NSHealthShareUsageDescription": "SnackFit 需要讀取您的心率與 HRV 數據，以提供個人化的運動強度建議。",
+        "NSHealthUpdateUsageDescription": "SnackFit 需要寫入運動記錄到「健康」App，讓您完整追蹤運動點心的成效。",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0E0E10"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "./plugins/withHealthKit"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "32d0bd22-804d-4fc6-9fec-f46e359ad079"
+      }
+    }
+  }
 }

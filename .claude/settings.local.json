@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(chmod:*)",
+      "Bash(npm view:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(eas build:*)",
+      "Bash(eas whoami:*)",
+      "Bash(eas build:list:*)",
+      "Read(//c/Users/leond/iCloudDrive/Desktop/**)",
+      "Bash(eas credentials:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
