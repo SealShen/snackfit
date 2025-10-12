@@ -165,16 +165,16 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 播放滴答聲（使用簡單的嗶聲）
+  // 播放滴答聲（時鐘秒針聲）
   const playTickSound = useCallback(async () => {
     try {
-      // 使用在線的簡短滴答聲音效
+      // 使用時鐘滴答聲音效
       const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg' },
-        { shouldPlay: true, volume: 0.3 }
+        { uri: 'https://actions.google.com/sounds/v1/foley/clock_tick.ogg' },
+        { shouldPlay: true, volume: 0.4 }
       );
       // 播放後立即卸載
-      setTimeout(() => sound.unloadAsync(), 200);
+      setTimeout(() => sound.unloadAsync(), 300);
     } catch (e) {
       // 如果加載失敗，靜默處理
       console.log('Tick sound unavailable');
