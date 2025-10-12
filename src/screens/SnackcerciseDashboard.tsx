@@ -64,6 +64,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const hrSimulatorRef = useRef<HeartRateSimulator | null>(null);
+  const tickSoundRef = useRef<Audio.Sound | null>(null); // 倒數音效
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const completedOpacity = useRef(new Animated.Value(0)).current;
   const ringsOpacity = useRef(new Animated.Value(1)).current; // 背景環透明度
@@ -114,6 +115,39 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   useEffect(() => {
     hrSimulatorRef.current = createDefaultSimulator(initialTime);
   }, [initialTime]);
+
+  // 初始化倒數音效
+  useEffect(() => {
+    // 載入音效
+    const loadSound = async () => {
+      try {
+        // 設定音效模式
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+
+        const { sound } = await Audio.Sound.createAsync(
+          // 使用短促的 beep 音效
+          { uri: 'https://cdn.freesound.org/previews/387/387232_7255534-lq.mp3' },
+          { shouldPlay: false, volume: 0.5 }
+        );
+        tickSoundRef.current = sound;
+        console.log('Tick sound loaded successfully');
+      } catch (error) {
+        console.log('Failed to load tick sound:', error);
+      }
+    };
+
+    loadSound();
+
+    // 清理
+    return () => {
+      if (tickSoundRef.current) {
+        tickSoundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   // 計算目標心率區間
   const targetHRZone = useMemo(() => {
@@ -215,6 +249,15 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         setTimeLeft((prev) => {
           const newTimeLeft = prev - 1;
           const elapsedSeconds = initialTime - newTimeLeft;
+
+          // 播放倒數音效
+          if (tickSoundRef.current) {
+            tickSoundRef.current.setPositionAsync(0).then(() => {
+              tickSoundRef.current?.playAsync();
+            }).catch((e) => {
+              console.log('Tick sound play error:', e);
+            });
+          }
 
           // 更新心率模擬
           if (hrSimulatorRef.current) {
@@ -340,12 +383,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
       {/* --- 主畫布 --- */}
       <View style={[styles.canvas, { width: size, height: size + 20 }]}>
         {/* --- SVG 環形進度（底層） --- */}
-        <Animated.View style={{ opacity: ringsOpacity }}>
+        <Animated.View style={[styles.rings, { opacity: ringsOpacity, zIndex: 0 }]}>
           <Svg
             viewBox={`0 0 ${vb} ${vb}`}
             width={size}
             height={size}
-            style={[styles.rings, { zIndex: 0 }]}
             pointerEvents="none"
           >
           <Defs>
