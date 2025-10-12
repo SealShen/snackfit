@@ -170,7 +170,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const playTickSound = useCallback(() => {
     // 使用輕微的觸覺反饋模擬時鐘滴答感
     // 這比音效更可靠，不會有載入問題
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.selectionAsync().catch(() => {});
   }, []);
 
   // 完成運動並儲存記錄
