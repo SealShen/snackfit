@@ -6,7 +6,6 @@ import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
-import * as Haptics from 'expo-haptics';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 import {
   TrainingPhase,
@@ -166,11 +165,39 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 播放滴答聲（觸覺反饋）
-  const playTickSound = useCallback(() => {
-    // 使用輕微的觸覺反饋模擬時鐘滴答感
-    // 這比音效更可靠，不會有載入問題
-    Haptics.selectionAsync().catch(() => {});
+  // 預載滴答聲音效
+  useEffect(() => {
+    const loadTickSound = async () => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/tick.wav'),
+          { shouldPlay: false, volume: 0.5 }
+        );
+        tickSoundRef.current = sound;
+        console.log('Tick sound loaded successfully');
+      } catch (e) {
+        console.log('Failed to load tick sound:', e);
+      }
+    };
+    loadTickSound();
+
+    return () => {
+      if (tickSoundRef.current) {
+        tickSoundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // 播放滴答聲（使用預載的音效）
+  const playTickSound = useCallback(async () => {
+    try {
+      if (tickSoundRef.current) {
+        // 重新播放音效
+        await tickSoundRef.current.replayAsync();
+      }
+    } catch (e) {
+      console.log('Failed to play tick sound:', e);
+    }
   }, []);
 
   // 完成運動並儲存記錄
