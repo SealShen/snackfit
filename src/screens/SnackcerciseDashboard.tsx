@@ -117,11 +117,26 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     hrSimulatorRef.current = createDefaultSimulator(initialTime);
   }, [initialTime]);
 
-  // 初始化倒數音效（使用 TTS 作為替代方案）
+  // 初始化音效系統
   useEffect(() => {
-    // 不使用外部音效檔案，改用 TTS 播放數字
-    // 音效功能將在計時器中直接使用 Speech API
-    console.log('Tick sound system ready (using TTS)');
+    const initAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+        console.log('Audio system ready');
+      } catch (e) {
+        console.log('Audio init error:', e);
+      }
+    };
+    initAudio();
+
+    return () => {
+      if (tickSoundRef.current) {
+        tickSoundRef.current.unloadAsync();
+      }
+    };
   }, []);
 
   // 計算目標心率區間
@@ -136,6 +151,35 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const guidanceCues = useMemo(() => {
     return generateGuidanceCues(currentPhase, currentLevel, initialTime);
   }, [currentPhase, currentLevel, initialTime]);
+
+  // 建立運動卡片資料（需要在completeWorkout之前定義）
+  const exerciseCards = useMemo(
+    () => [
+      { name: initialActionName, duration: "2 min", sportIcon: "yoga" as const },
+      ...actionPool.map((name, idx) => ({
+        name,
+        duration: "2 min",
+        sportIcon: (["arm-flex", "run", "dumbbell", "human-handsup"] as const)[idx % 4],
+      })),
+    ],
+    [initialActionName, actionPool]
+  );
+
+  // 播放滴答聲（使用簡單的嗶聲）
+  const playTickSound = useCallback(async () => {
+    try {
+      // 使用在線的簡短滴答聲音效
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg' },
+        { shouldPlay: true, volume: 0.3 }
+      );
+      // 播放後立即卸載
+      setTimeout(() => sound.unloadAsync(), 200);
+    } catch (e) {
+      // 如果加載失敗，靜默處理
+      console.log('Tick sound unavailable');
+    }
+  }, []);
 
   // 完成運動並儲存記錄
   const completeWorkout = useCallback(async () => {
@@ -225,6 +269,9 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           const newTimeLeft = prev - 1;
           const elapsedSeconds = initialTime - newTimeLeft;
 
+          // 播放滴答聲（每秒）
+          playTickSound();
+
           // 播放倒數音效（最後10秒播放數字）
           if (newTimeLeft <= 10 && newTimeLeft > 0) {
             try {
@@ -282,20 +329,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, [playing, timeLeft, onPlayToggle, completeWorkout, guidanceCues, initialTime]);
-
-  // 建立運動卡片資料
-  const exerciseCards = useMemo(
-    () => [
-      { name: initialActionName, duration: "2 min", sportIcon: "yoga" as const },
-      ...actionPool.map((name, idx) => ({
-        name,
-        duration: "2 min",
-        sportIcon: (["arm-flex", "run", "dumbbell", "human-handsup"] as const)[idx % 4],
-      })),
-    ],
-    [initialActionName, actionPool]
-  );
+  }, [playing, timeLeft, onPlayToggle, completeWorkout, guidanceCues, initialTime, playTickSound]);
 
   const currentExercise = exerciseCards[currentCard];
 
