@@ -165,21 +165,21 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 預載滴答聲音效
+  // 預載 beep 音效
   useEffect(() => {
-    const loadTickSound = async () => {
+    const loadBeepSound = async () => {
       try {
         const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/tick.wav'),
-          { shouldPlay: false, volume: 0.5 }
+          require('../../assets/sounds/beep.wav'),
+          { shouldPlay: false, volume: 0.3 }
         );
         tickSoundRef.current = sound;
-        console.log('Tick sound loaded successfully');
+        console.log('Beep sound loaded successfully');
       } catch (e) {
-        console.log('Failed to load tick sound:', e);
+        console.log('Failed to load beep sound:', e);
       }
     };
-    loadTickSound();
+    loadBeepSound();
 
     return () => {
       if (tickSoundRef.current) {
@@ -188,15 +188,14 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     };
   }, []);
 
-  // 播放滴答聲（使用預載的音效）
+  // 播放 beep 聲
   const playTickSound = useCallback(async () => {
     try {
       if (tickSoundRef.current) {
-        // 重新播放音效
         await tickSoundRef.current.replayAsync();
       }
     } catch (e) {
-      console.log('Failed to play tick sound:', e);
+      console.log('Failed to play beep:', e);
     }
   }, []);
 
