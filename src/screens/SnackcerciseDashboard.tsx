@@ -6,6 +6,7 @@ import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
+import * as Haptics from 'expo-haptics';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 import {
   TrainingPhase,
@@ -165,20 +166,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 播放滴答聲（時鐘秒針聲）
-  const playTickSound = useCallback(async () => {
-    try {
-      // 使用時鐘滴答聲音效
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://actions.google.com/sounds/v1/foley/clock_tick.ogg' },
-        { shouldPlay: true, volume: 0.4 }
-      );
-      // 播放後立即卸載
-      setTimeout(() => sound.unloadAsync(), 300);
-    } catch (e) {
-      // 如果加載失敗，靜默處理
-      console.log('Tick sound unavailable');
-    }
+  // 播放滴答聲（觸覺反饋）
+  const playTickSound = useCallback(() => {
+    // 使用輕微的觸覺反饋模擬時鐘滴答感
+    // 這比音效更可靠，不會有載入問題
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, []);
 
   // 完成運動並儲存記錄
