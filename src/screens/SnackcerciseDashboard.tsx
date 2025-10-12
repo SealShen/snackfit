@@ -165,13 +165,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 預載 beep 音效
+  // 預載 beep 音效（Google Actions beep_short）
   useEffect(() => {
     const loadBeepSound = async () => {
       try {
         const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/beep.wav'),
-          { shouldPlay: false, volume: 0.3 }
+          require('../../assets/sounds/beep_short.ogg'),
+          { shouldPlay: false, volume: 0.4 }
         );
         tickSoundRef.current = sound;
         console.log('Beep sound loaded successfully');
