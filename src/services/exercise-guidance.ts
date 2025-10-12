@@ -5,6 +5,9 @@
  * 基於生理狀態提供即時指導語和動作調整
  */
 
+import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
+
 // ==================== 類型定義 ====================
 
 /**
@@ -335,4 +338,39 @@ export function simulateHRVStatus(): HRVStatus {
  */
 export function shouldUseRecoveryProtocol(hrvStatus: HRVStatus): boolean {
   return hrvStatus === 'stressed';
+}
+
+// ==================== 語音播放 ====================
+
+/**
+ * 播放指導語（使用 TTS）
+ */
+export async function speakGuidance(message: string): Promise<void> {
+  try {
+    // 停止之前的語音
+    if (Speech.isSpeakingAsync()) {
+      await Speech.stop();
+    }
+
+    // 播放新的指導語
+    await Speech.speak(message, {
+      language: 'zh-TW', // 繁體中文
+      pitch: 1.0,
+      rate: 0.9, // 稍微慢一點，更清楚
+      voice: 'com.apple.voice.compact.zh-TW.Meijia', // iOS 中文語音（如果可用）
+    });
+  } catch (error) {
+    console.log('語音播放失敗:', error);
+  }
+}
+
+/**
+ * 停止語音播放
+ */
+export async function stopSpeaking(): Promise<void> {
+  try {
+    await Speech.stop();
+  } catch (error) {
+    console.log('停止語音失敗:', error);
+  }
 }

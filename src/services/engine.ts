@@ -164,7 +164,6 @@ export async function getSnacksContext() {
  * 2) 命中使用者自訂地點 → 可在此依 env 調整訊息（可選）
  * 注意：這段碼不改動你現有的排程邏輯，只在送出前多一道判斷。
  */
-import * as Notifications from "expo-notifications";
 // 若同檔已宣告 getSnacksContext 可直接使用；若在其他檔，請調整 import 來源。
 declare const getSnacksContext: () => Promise<{ allow:boolean; reason?:string; prefs:any; env:string|null }>;
 

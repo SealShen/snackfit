@@ -13,6 +13,8 @@ import {
   getCurrentGuidance,
   calculateTargetHRZone,
   BURPEE_LEVELS,
+  speakGuidance,
+  stopSpeaking,
 } from "../services/exercise-guidance";
 import { HeartRateSimulator, createDefaultSimulator } from "../services/heart-rate-simulator";
 
@@ -64,6 +66,8 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const hrSimulatorRef = useRef<HeartRateSimulator | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const completedOpacity = useRef(new Animated.Value(0)).current;
+  const ringsOpacity = useRef(new Animated.Value(1)).current; // 背景環透明度
+  const lastGuidanceRef = useRef<string>(''); // 記錄上次播放的指導語
   const insets = useSafeAreaInsets();
 
   // 目標值
@@ -185,6 +189,25 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     }
   }, [exerciseCards, currentCard, initialTime, locations, activeLocation, loadProgress, pulseAnim, completedOpacity]);
 
+  // 背景環淡出/淡入效果
+  useEffect(() => {
+    if (playing) {
+      // 運動開始時，背景環變淡
+      Animated.timing(ringsOpacity, {
+        toValue: 0.3,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // 運動停止時，背景環恢復
+      Animated.timing(ringsOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [playing, ringsOpacity]);
+
   // 計時器 effect（同時更新心率和指導語）
   useEffect(() => {
     if (playing && timeLeft > 0) {
@@ -199,16 +222,20 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
             setCurrentHR(newHR);
           }
 
-          // 更新指導語
+          // 更新指導語（語音播放）
           const guidance = getCurrentGuidance(guidanceCues, elapsedSeconds);
-          if (guidance) {
+          if (guidance && guidance.message !== lastGuidanceRef.current) {
             setCurrentGuidance(guidance.message);
+            lastGuidanceRef.current = guidance.message;
+            // 播放語音
+            speakGuidance(guidance.message);
           }
 
           if (newTimeLeft <= 0) {
             // 時間到！完成運動
             setPlaying(false);
             onPlayToggle?.(false);
+            stopSpeaking(); // 停止語音
             completeWorkout(); // 儲存記錄
             return 0;
           }
@@ -219,6 +246,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
+      }
+      // 停止時也停止語音
+      if (!playing) {
+        stopSpeaking();
+        lastGuidanceRef.current = ''; // 重置
       }
     }
 
@@ -308,13 +340,14 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
       {/* --- 主畫布 --- */}
       <View style={[styles.canvas, { width: size, height: size + 20 }]}>
         {/* --- SVG 環形進度（底層） --- */}
-        <Svg
-          viewBox={`0 0 ${vb} ${vb}`}
-          width={size}
-          height={size}
-          style={[styles.rings, { zIndex: 0 }]}
-          pointerEvents="none"
-        >
+        <Animated.View style={{ opacity: ringsOpacity }}>
+          <Svg
+            viewBox={`0 0 ${vb} ${vb}`}
+            width={size}
+            height={size}
+            style={[styles.rings, { zIndex: 0 }]}
+            pointerEvents="none"
+          >
           <Defs>
             <ClipPath id="ringClip">
               <Circle cx={cx} cy={cy} r={100} />
@@ -349,6 +382,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
             />
           </G>
         </Svg>
+        </Animated.View>
 
         {/* --- 卡片輪播區塊（上層但在環內） --- */}
         <View
@@ -404,13 +438,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                       <MaterialCommunityIcons name="heart-pulse" size={18} color="#FF6B9D" />
                       <Text style={styles.hrText}>{currentHR} bpm</Text>
                       <Text style={styles.hrZone}>目標: {targetHRZone[0]}-{targetHRZone[1]}</Text>
-                    </View>
-                  )}
-
-                  {/* 指導語 */}
-                  {playing && currentGuidance && (
-                    <View style={styles.guidanceContainer}>
-                      <Text style={styles.guidanceText}>{currentGuidance}</Text>
                     </View>
                   )}
 
