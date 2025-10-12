@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 import { saveWorkout, getTodayStats, getWeekStats, calculateProgress } from "../services/workout-log";
 import {
   TrainingPhase,
@@ -116,37 +117,11 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     hrSimulatorRef.current = createDefaultSimulator(initialTime);
   }, [initialTime]);
 
-  // 初始化倒數音效
+  // 初始化倒數音效（使用 TTS 作為替代方案）
   useEffect(() => {
-    // 載入音效
-    const loadSound = async () => {
-      try {
-        // 設定音效模式
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-        });
-
-        const { sound } = await Audio.Sound.createAsync(
-          // 使用短促的 beep 音效
-          { uri: 'https://cdn.freesound.org/previews/387/387232_7255534-lq.mp3' },
-          { shouldPlay: false, volume: 0.5 }
-        );
-        tickSoundRef.current = sound;
-        console.log('Tick sound loaded successfully');
-      } catch (error) {
-        console.log('Failed to load tick sound:', error);
-      }
-    };
-
-    loadSound();
-
-    // 清理
-    return () => {
-      if (tickSoundRef.current) {
-        tickSoundRef.current.unloadAsync();
-      }
-    };
+    // 不使用外部音效檔案，改用 TTS 播放數字
+    // 音效功能將在計時器中直接使用 Speech API
+    console.log('Tick sound system ready (using TTS)');
   }, []);
 
   // 計算目標心率區間
@@ -250,13 +225,18 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           const newTimeLeft = prev - 1;
           const elapsedSeconds = initialTime - newTimeLeft;
 
-          // 播放倒數音效
-          if (tickSoundRef.current) {
-            tickSoundRef.current.setPositionAsync(0).then(() => {
-              tickSoundRef.current?.playAsync();
-            }).catch((e) => {
-              console.log('Tick sound play error:', e);
-            });
+          // 播放倒數音效（最後10秒播放數字）
+          if (newTimeLeft <= 10 && newTimeLeft > 0) {
+            try {
+              Speech.speak(newTimeLeft.toString(), {
+                language: 'zh-TW',
+                pitch: 1.2,
+                rate: 1.0,
+                volume: 0.8,
+              });
+            } catch (e) {
+              console.log('Countdown voice error:', e);
+            }
           }
 
           // 更新心率模擬
