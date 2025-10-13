@@ -1,6 +1,6 @@
 // SnackcerciseDashboard.tsx
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Dimensions, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ScrollView, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, G, Defs, ClipPath } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -15,11 +15,10 @@ import {
   calculateTargetHRZone,
   BURPEE_LEVELS,
   speakGuidance,
-  stopSpeaking,
+  stopSpeaking
 } from "../services/exercise-guidance";
 import { HeartRateSimulator, createDefaultSimulator } from "../services/heart-rate-simulator";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export type SnackcerciseDashboardProps = {
   dayProgress?: number;
@@ -60,7 +59,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const [currentPhase, setCurrentPhase] = useState<TrainingPhase>('P1');
   const [currentLevel, setCurrentLevel] = useState<ExerciseLevel>(2); // 預設 Level 2
   const [currentHR, setCurrentHR] = useState(65); // 模擬當前心率
-  const [currentGuidance, setCurrentGuidance] = useState<string>('');
 
   const scrollViewRef = useRef<ScrollView>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -89,9 +87,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 計算計時器進度 (0-1)
-  const timerProgress = initialTime > 0 ? (initialTime - timeLeft) / initialTime : 0;
-
   // 載入進度資料
   const loadProgress = useCallback(async () => {
     try {
@@ -117,24 +112,33 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     hrSimulatorRef.current = createDefaultSimulator(initialTime);
   }, [initialTime]);
 
-  // 初始化音效系統
+  // 初始化音效系統並預載 beep 音效
   useEffect(() => {
-    const initAudio = async () => {
+    const initAudioAndLoadSound = async () => {
       try {
+        // 設定音效模式
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
         });
         console.log('Audio system ready');
+
+        // 預載 beep 音效
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/beep_short.ogg'),
+          { shouldPlay: false, volume: 0.4 }
+        );
+        tickSoundRef.current = sound;
+        console.log('Beep sound loaded successfully');
       } catch (e) {
-        console.log('Audio init error:', e);
+        console.log('Audio initialization error:', e);
       }
     };
-    initAudio();
+    initAudioAndLoadSound();
 
     return () => {
       if (tickSoundRef.current) {
-        tickSoundRef.current.unloadAsync();
+        tickSoundRef.current.unloadAsync().catch(() => {});
       }
     };
   }, []);
@@ -164,29 +168,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     ],
     [initialActionName, actionPool]
   );
-
-  // 預載 beep 音效（Google Actions beep_short）
-  useEffect(() => {
-    const loadBeepSound = async () => {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/beep_short.ogg'),
-          { shouldPlay: false, volume: 0.4 }
-        );
-        tickSoundRef.current = sound;
-        console.log('Beep sound loaded successfully');
-      } catch (e) {
-        console.log('Failed to load beep sound:', e);
-      }
-    };
-    loadBeepSound();
-
-    return () => {
-      if (tickSoundRef.current) {
-        tickSoundRef.current.unloadAsync();
-      }
-    };
-  }, []);
 
   // 播放 beep 聲
   const playTickSound = useCallback(async () => {
@@ -313,7 +294,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           // 更新指導語（語音播放）
           const guidance = getCurrentGuidance(guidanceCues, elapsedSeconds);
           if (guidance && guidance.message !== lastGuidanceRef.current) {
-            setCurrentGuidance(guidance.message);
             lastGuidanceRef.current = guidance.message;
             // 播放語音
             speakGuidance(guidance.message);
@@ -348,8 +328,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
       }
     };
   }, [playing, timeLeft, onPlayToggle, completeWorkout, guidanceCues, initialTime, playTickSound]);
-
-  const currentExercise = exerciseCards[currentCard];
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const w = e.nativeEvent.layout.width;
@@ -594,7 +572,6 @@ const styles = StyleSheet.create({
   cardPage: { justifyContent: "center", alignItems: "center" },
   cardContent: { alignItems: "center", gap: 4 },
   exerciseName: { fontSize: 22, fontWeight: "900", color: "#EAEAF0", marginTop: 4 },
-  exerciseDuration: { fontSize: 14, fontWeight: "600", color: "#A0A1B2" },
 
   levelBadge: {
     fontSize: 11,
@@ -632,23 +609,6 @@ const styles = StyleSheet.create({
     color: "#FF6B9D",
     opacity: 0.7,
     marginLeft: 4,
-  },
-
-  guidanceContainer: {
-    backgroundColor: "rgba(35,192,116,.15)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    marginTop: 6,
-    maxWidth: "90%",
-  },
-
-  guidanceText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#23C074",
-    textAlign: "center",
-    lineHeight: 18,
   },
 
   timerText: {
