@@ -123,13 +123,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         });
         console.log('Audio system ready');
 
-        // 預載簡短嗶聲（使用線上URL更可靠）
+        // 預載碼錶滴答聲（使用線上URL更可靠）
         const { sound } = await Audio.Sound.createAsync(
-          { uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg' },
+          { uri: 'https://actions.google.com/sounds/v1/tools/record_alert.ogg' },
           { shouldPlay: false, volume: 1.0 }
         );
         tickSoundRef.current = sound;
-        console.log('Beep sound loaded successfully');
+        console.log('Stopwatch tick sound loaded successfully');
       } catch (e) {
         console.log('Audio initialization error:', e);
       }
