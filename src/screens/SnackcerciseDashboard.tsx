@@ -126,7 +126,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         // 預載時鐘滴答聲（使用線上URL更可靠）
         const { sound } = await Audio.Sound.createAsync(
           { uri: 'https://actions.google.com/sounds/v1/household/clock_ticking.ogg' },
-          { shouldPlay: false, volume: 0.5 }
+          { shouldPlay: false, volume: 1.0 }
         );
         tickSoundRef.current = sound;
         console.log('Clock tick sound loaded successfully');
