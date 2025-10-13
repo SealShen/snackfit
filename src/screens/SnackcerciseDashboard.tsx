@@ -123,13 +123,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         });
         console.log('Audio system ready');
 
-        // 預載 beep 音效（使用線上URL更可靠）
+        // 預載時鐘滴答聲（使用線上URL更可靠）
         const { sound } = await Audio.Sound.createAsync(
-          { uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg' },
-          { shouldPlay: false, volume: 0.4 }
+          { uri: 'https://actions.google.com/sounds/v1/household/clock_ticking.ogg' },
+          { shouldPlay: false, volume: 0.5 }
         );
         tickSoundRef.current = sound;
-        console.log('Beep sound loaded successfully');
+        console.log('Clock tick sound loaded successfully');
       } catch (e) {
         console.log('Audio initialization error:', e);
       }
@@ -169,7 +169,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 播放 beep 聲
+  // 播放時鐘滴答聲
   const playTickSound = useCallback(async () => {
     try {
       if (tickSoundRef.current) {
@@ -178,7 +178,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         await tickSoundRef.current.playAsync();
       }
     } catch (e) {
-      console.log('Failed to play beep:', e);
+      console.log('Failed to play tick sound:', e);
     }
   }, []);
 
