@@ -169,16 +169,18 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
     [initialActionName, actionPool]
   );
 
-  // 播放碼錶嗶聲
+  // 播放碼錶滴答聲
   const playTickSound = useCallback(async () => {
     try {
       if (tickSoundRef.current) {
+        // 確保音量為最大
+        await tickSoundRef.current.setVolumeAsync(1.0);
         // 重置到開頭並播放
         await tickSoundRef.current.setPositionAsync(0);
         await tickSoundRef.current.playAsync();
       }
     } catch (e) {
-      console.log('Failed to play beep sound:', e);
+      console.log('Failed to play tick sound:', e);
     }
   }, []);
 
@@ -283,13 +285,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           if (newTimeLeft <= 10 && newTimeLeft > 0) {
             // 停止所有正在播放的語音
             stopSpeaking();
-            // 播放倒數數字（降低音量）
+            // 播放倒數數字（降低音量讓滴答聲更明顯）
             try {
               Speech.speak(newTimeLeft.toString(), {
                 language: 'zh-TW',
                 pitch: 1.2,
                 rate: 1.0,
-                volume: 0.5,
+                volume: 0.3,
               });
             } catch (e) {
               console.log('Countdown voice error:', e);
