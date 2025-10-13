@@ -283,13 +283,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           if (newTimeLeft <= 10 && newTimeLeft > 0) {
             // 停止所有正在播放的語音
             stopSpeaking();
-            // 播放倒數數字
+            // 播放倒數數字（降低音量）
             try {
               Speech.speak(newTimeLeft.toString(), {
                 language: 'zh-TW',
                 pitch: 1.2,
                 rate: 1.0,
-                volume: 0.8,
+                volume: 0.5,
               });
             } catch (e) {
               console.log('Countdown voice error:', e);
@@ -309,6 +309,10 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
             setPlaying(false);
             onPlayToggle?.(false);
             stopSpeaking(); // 停止語音
+            // 停止滴答聲
+            if (tickSoundRef.current) {
+              tickSoundRef.current.stopAsync().catch(() => {});
+            }
             completeWorkout(); // 儲存記錄
             return 0;
           }
@@ -320,10 +324,13 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      // 停止時也停止語音
+      // 停止時也停止語音和滴答聲
       if (!playing) {
         stopSpeaking();
         lastGuidanceRef.current = ''; // 重置
+        if (tickSoundRef.current) {
+          tickSoundRef.current.stopAsync().catch(() => {});
+        }
       }
     }
 
