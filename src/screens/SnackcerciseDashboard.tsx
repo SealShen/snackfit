@@ -123,9 +123,9 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
         });
         console.log('Audio system ready');
 
-        // 預載 beep 音效
+        // 預載 beep 音效（使用線上URL更可靠）
         const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/beep_short.ogg'),
+          { uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg' },
           { shouldPlay: false, volume: 0.4 }
         );
         tickSoundRef.current = sound;

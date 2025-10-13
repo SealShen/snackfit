@@ -11,7 +11,11 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: replace text guidance with voice TTS and add ring fade effect\n\nChanges:\n- Replace on-screen text guidance with voice guidance using expo-speech\n- Add background ring fade-out effect during workout (opacity 1.0 -> 0.3)\n- Install expo-speech for text-to-speech functionality\n- Remove guidanceContainer UI component\n- Add voice playback when guidance changes\n- Auto-stop voice when workout ends or pauses\n- Fix engine.ts duplicate Notifications import error\n\nUI improvements:\n- Cleaner interface with less visual clutter during workout\n- Background rings fade to 30% opacity when exercising\n- Smooth 500ms fade animation\n\nFiles modified:\n- src/services/engine.ts: Remove duplicate import\n- src/services/exercise-guidance.ts: Add speakGuidance and stopSpeaking\n- src/screens/SnackcerciseDashboard.tsx: Voice + fade effect\n- package.json: Add expo-speech\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Read(//c/Users/leond/iCloudDrive/Desktop/**)"
+      "Read(//c/Users/leond/iCloudDrive/Desktop/**)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: replace audio tick with voice countdown and fix ring clipping\n\nChanges:\n- Fix progress ring clipping by moving styles to Animated.View wrapper\n- Replace external audio loading with TTS countdown for last 10 seconds\n- Remove duplicate getSnacksContext declaration in engine.ts\n- Remove read-only Notifications API monkey-patching code\n- Add Speech import and countdown voice implementation\n- Voice countdown plays numbers 10-1 in Chinese (zh-TW)\n\nBug fixes:\n- Ring display no longer clips on right side\n- Resolve duplicate identifier compilation error\n- Remove AVPlayerItem audio loading failure\n- Fix read-only property assignment error\n\nFiles modified:\n- src/screens/SnackcerciseDashboard.tsx: Fix ring styles + TTS countdown\n- src/services/engine.ts: Remove duplicates and invalid overrides\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(curl:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:developers.google.com)"
     ],
     "deny": [],
     "ask": []
