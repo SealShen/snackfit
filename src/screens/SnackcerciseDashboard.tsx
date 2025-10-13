@@ -173,7 +173,9 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
   const playTickSound = useCallback(async () => {
     try {
       if (tickSoundRef.current) {
-        await tickSoundRef.current.replayAsync();
+        // 重置到開頭並播放
+        await tickSoundRef.current.setPositionAsync(0);
+        await tickSoundRef.current.playAsync();
       }
     } catch (e) {
       console.log('Failed to play beep:', e);
@@ -271,8 +273,17 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
           // 播放滴答聲（每秒）
           playTickSound();
 
-          // 播放倒數音效（最後10秒播放數字）
+          // 更新心率模擬
+          if (hrSimulatorRef.current) {
+            const newHR = hrSimulatorRef.current.getCurrentHeartRate(elapsedSeconds);
+            setCurrentHR(newHR);
+          }
+
+          // 最後10秒：只播放倒數，不播放指導語
           if (newTimeLeft <= 10 && newTimeLeft > 0) {
+            // 停止所有正在播放的語音
+            stopSpeaking();
+            // 播放倒數數字
             try {
               Speech.speak(newTimeLeft.toString(), {
                 language: 'zh-TW',
@@ -283,20 +294,14 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
             } catch (e) {
               console.log('Countdown voice error:', e);
             }
-          }
-
-          // 更新心率模擬
-          if (hrSimulatorRef.current) {
-            const newHR = hrSimulatorRef.current.getCurrentHeartRate(elapsedSeconds);
-            setCurrentHR(newHR);
-          }
-
-          // 更新指導語（語音播放）
-          const guidance = getCurrentGuidance(guidanceCues, elapsedSeconds);
-          if (guidance && guidance.message !== lastGuidanceRef.current) {
-            lastGuidanceRef.current = guidance.message;
-            // 播放語音
-            speakGuidance(guidance.message);
+          } else {
+            // 大於10秒：正常播放指導語
+            const guidance = getCurrentGuidance(guidanceCues, elapsedSeconds);
+            if (guidance && guidance.message !== lastGuidanceRef.current) {
+              lastGuidanceRef.current = guidance.message;
+              // 播放語音
+              speakGuidance(guidance.message);
+            }
           }
 
           if (newTimeLeft <= 0) {
