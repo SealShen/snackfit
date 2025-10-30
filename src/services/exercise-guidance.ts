@@ -173,7 +173,7 @@ export function generateGuidanceCues(
   cues.push({
     timing: 'start',
     timeRange: [0, 5],
-    message: `開始！${BURPEE_LEVELS[level - 1].name}`,
+    message: '開始！',
   });
 
   // 暖身階段（5-15秒）

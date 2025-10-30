@@ -485,9 +485,6 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                   <MaterialCommunityIcons name={card.sportIcon} size={28} color="#A88CF5" />
                   <Text style={styles.exerciseName}>{card.name}</Text>
 
-                  {/* 顯示動作等級 */}
-                  <Text style={styles.levelBadge}>Level {currentLevel} · {BURPEE_LEVELS[currentLevel - 1].name}</Text>
-
                   {/* 倒數計時顯示 / 完成訊息（二選一顯示，保持位置一致） */}
                   {showCompleted ? (
                     <Animated.View style={[styles.completedBadge, { opacity: completedOpacity }]}>
@@ -586,18 +583,6 @@ const styles = StyleSheet.create({
   cardPage: { justifyContent: "center", alignItems: "center" },
   cardContent: { alignItems: "center", gap: 4 },
   exerciseName: { fontSize: 22, fontWeight: "900", color: "#EAEAF0", marginTop: 4 },
-
-  levelBadge: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#A88CF5",
-    backgroundColor: "rgba(168,140,245,.15)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginTop: 4,
-    marginBottom: 4,
-  },
 
   hrContainer: {
     flexDirection: "row",
