@@ -291,7 +291,7 @@ const SnackcerciseDashboard: React.FC<SnackcerciseDashboardProps> = ({
                 language: 'zh-TW',
                 pitch: 1.2,
                 rate: 1.0,
-                volume: 0.1,
+                volume: 0.05,
               });
             } catch (e) {
               console.log('Countdown voice error:', e);
